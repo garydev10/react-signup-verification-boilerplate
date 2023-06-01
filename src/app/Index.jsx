@@ -8,6 +8,7 @@ import { Home } from '@/home';
 import { Profile } from '@/profile';
 import { Admin } from '@/admin';
 import { Account } from '@/account';
+import { Product } from '@/product';
 
 function App() {
     const { pathname } = useLocation();  
