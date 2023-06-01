@@ -3,7 +3,77 @@ import { alertService } from '@/_services';
 
 // array in local storage for registered users
 const usersKey = 'react-signup-verification-boilerplate-users';
-let users = JSON.parse(localStorage.getItem(usersKey)) || [];
+// let users = JSON.parse(localStorage.getItem(usersKey)) || [];
+
+// array in local storage for registered products
+const productsKey = 'react-signup-verification-boilerplate-products';
+// let products = JSON.parse(localStorage.getItem(productsKey)) || [];
+
+
+// seed test data for fake backend
+let users = [
+    {
+        "title": "Mr",
+        "firstName": "admin",
+        "lastName": "test",
+        "email": "admin@test.com",
+        "password": "test1234",
+        "acceptTerms": true,
+        "id": 1,
+        "role": "Admin",
+        "dateCreated": "2022-02-07T06:56:48.630Z",
+        "verificationToken": "1644217008630",
+        "isVerified": true,
+        "refreshTokens": []
+    },
+    {
+        "title": "Mrs",
+        "firstName": "user",
+        "lastName": "test",
+        "email": "user@test.com",
+        "role": "User",
+        "password": "test1234",
+        "id": 2,
+        "dateCreated": "2022-02-07T14:41:05.232Z",
+        "isVerified": true,
+        "refreshTokens": []
+    }
+];
+
+let products = [
+    {
+        "id": 1,
+        "name": "shoes",
+        "stock": 10,
+        "price": 399.99,
+        "shortDesc": "Nulla facilisi. Curabitur at lacus ac velit ornare lobortis.",
+        "description": "Cras sagittis. Praesent nec nisl a purus blandit viverra. Ut leo. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Fusce a quam."
+    },
+    {
+        "id": 2,
+        "name": "bags",
+        "stock": 20,
+        "price": 299.99,
+        "shortDesc": "Nulla facilisi. Curabitur at lacus ac velit ornare lobortis.",
+        "description": "Cras sagittis. Praesent nec nisl a purus blandit viverra. Ut leo. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Fusce a quam."
+    },
+    {
+        "id": 3,
+        "name": "shirts",
+        "stock": 15,
+        "price": 149.99,
+        "shortDesc": "Nulla facilisi. Curabitur at lacus ac velit ornare lobortis.",
+        "description": "Cras sagittis. Praesent nec nisl a purus blandit viverra. Ut leo. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Fusce a quam."
+    },
+    {
+        "id": 4,
+        "name": "shorts",
+        "stock": 5,
+        "price": 109.99,
+        "shortDesc": "Nulla facilisi. Curabitur at lacus ac velit ornare lobortis.",
+        "description": "Cras sagittis. Praesent nec nisl a purus blandit viverra. Ut leo. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Fusce a quam."
+    }
+];
 
 export function configureFakeBackend() {
     let realFetch = window.fetch;
@@ -31,6 +101,8 @@ export function configureFakeBackend() {
                         return validateResetToken();
                     case url.endsWith('/accounts/reset-password') && method === 'POST':
                         return resetPassword();
+
+                    // user CRUD
                     case url.endsWith('/accounts') && method === 'GET':
                         return getUsers();
                     case url.match(/\/accounts\/\d+$/) && method === 'GET':
@@ -41,6 +113,19 @@ export function configureFakeBackend() {
                         return updateUser();
                     case url.match(/\/accounts\/\d+$/) && method === 'DELETE':
                         return deleteUser();
+
+                    // product CRUD
+                    case url.endsWith('/products') && method === 'GET':
+                        return getProducts();
+                    case url.match(/\/products\/\d+$/) && method === 'GET':
+                        return getProductById();
+                    case url.endsWith('/products') && method === 'POST':
+                        return createProduct();
+                    case url.match(/\/products\/\d+$/) && method === 'PUT':
+                        return updateProduct();
+                    case url.match(/\/products\/\d+$/) && method === 'DELETE':
+                        return deleteProduct();
+
                     default:
                         // pass through any requests not handled above
                         return realFetch(url, opts)
@@ -74,17 +159,17 @@ export function configureFakeBackend() {
 
             function refreshToken() {
                 const refreshToken = getRefreshToken();
-                
+
                 if (!refreshToken) return unauthorized();
 
                 const user = users.find(x => x.refreshTokens.includes(refreshToken));
-                
+
                 if (!user) return unauthorized();
 
                 // replace old refresh token with a new one and save
                 user.refreshTokens = user.refreshTokens.filter(x => x !== refreshToken);
                 user.refreshTokens.push(generateRefreshToken());
-                localStorage.setItem(usersKey, JSON.stringify(users));
+                // localStorage.setItem(usersKey, JSON.stringify(users));
 
                 return ok({
                     id: user.id,
@@ -99,20 +184,20 @@ export function configureFakeBackend() {
 
             function revokeToken() {
                 if (!isAuthenticated()) return unauthorized();
-                
+
                 const refreshToken = getRefreshToken();
                 const user = users.find(x => x.refreshTokens.includes(refreshToken));
-                
+
                 // revoke token and save
                 user.refreshTokens = user.refreshTokens.filter(x => x !== refreshToken);
-                localStorage.setItem(usersKey, JSON.stringify(users));
+                // localStorage.setItem(usersKey, JSON.stringify(users));
 
                 return ok();
             }
 
             function register() {
                 const user = body();
-    
+
                 if (users.find(x => x.email === user.email)) {
                     // display email already registered "email" in alert
                     setTimeout(() => {
@@ -127,7 +212,7 @@ export function configureFakeBackend() {
                     // always return ok() response to prevent email enumeration
                     return ok();
                 }
-    
+
                 // assign user id and a few other properties then save
                 user.id = newUserId();
                 if (user.id === 1) {
@@ -142,7 +227,7 @@ export function configureFakeBackend() {
                 user.refreshTokens = [];
                 delete user.confirmPassword;
                 users.push(user);
-                localStorage.setItem(usersKey, JSON.stringify(users));
+                // localStorage.setItem(usersKey, JSON.stringify(users));
 
                 // display verification email in alert
                 setTimeout(() => {
@@ -158,16 +243,16 @@ export function configureFakeBackend() {
 
                 return ok();
             }
-    
+
             function verifyEmail() {
                 const { token } = body();
                 const user = users.find(x => !!x.verificationToken && x.verificationToken === token);
-                
+
                 if (!user) return error('Verification failed');
-                
+
                 // set is verified flag to true if token is valid
                 user.isVerified = true;
-                localStorage.setItem(usersKey, JSON.stringify(users));
+                // localStorage.setItem(usersKey, JSON.stringify(users));
 
                 return ok();
             }
@@ -175,14 +260,14 @@ export function configureFakeBackend() {
             function forgotPassword() {
                 const { email } = body();
                 const user = users.find(x => x.email === email);
-                
+
                 // always return ok() response to prevent email enumeration
                 if (!user) return ok();
-                
+
                 // create reset token that expires after 24 hours
                 user.resetToken = new Date().getTime().toString();
                 user.resetTokenExpires = new Date(Date.now() + 24*60*60*1000).toISOString();
-                localStorage.setItem(usersKey, JSON.stringify(users));
+                // localStorage.setItem(usersKey, JSON.stringify(users));
 
                 // display password reset email in alert
                 setTimeout(() => {
@@ -204,9 +289,9 @@ export function configureFakeBackend() {
                     !!x.resetToken && x.resetToken === token &&
                     new Date() < new Date(x.resetTokenExpires)
                 );
-                
+
                 if (!user) return error('Invalid token');
-                
+
                 return ok();
             }
 
@@ -216,18 +301,20 @@ export function configureFakeBackend() {
                     !!x.resetToken && x.resetToken === token &&
                     new Date() < new Date(x.resetTokenExpires)
                 );
-                
+
                 if (!user) return error('Invalid token');
-                
+
                 // update password and remove reset token
                 user.password = password;
                 user.isVerified = true;
                 delete user.resetToken;
                 delete user.resetTokenExpires;
-                localStorage.setItem(usersKey, JSON.stringify(users));
+                // localStorage.setItem(usersKey, JSON.stringify(users));
 
                 return ok();
             }
+
+            // user CRUD
 
             function getUsers() {
                 if (!isAuthorized(Role.Admin)) return unauthorized();
@@ -237,7 +324,7 @@ export function configureFakeBackend() {
 
             function getUserById() {
                 if (!isAuthenticated()) return unauthorized();
-    
+
                 let user = users.find(x => x.id === idFromUrl());
 
                 // users can get own profile and admins can get all profiles
@@ -247,10 +334,10 @@ export function configureFakeBackend() {
 
                 return ok(user);
             }
-    
+
             function createUser() {
                 if (!isAuthorized(Role.Admin)) return unauthorized();
-    
+
                 const user = body();
                 if (users.find(x => x.email === user.email)) {
                     return error(`Email ${user.email} is already registered`);
@@ -263,14 +350,14 @@ export function configureFakeBackend() {
                 user.refreshTokens = [];
                 delete user.confirmPassword;
                 users.push(user);
-                localStorage.setItem(usersKey, JSON.stringify(users));
+                // localStorage.setItem(usersKey, JSON.stringify(users));
 
                 return ok();
             }
-    
+
             function updateUser() {
                 if (!isAuthenticated()) return unauthorized();
-    
+
                 let params = body();
                 let user = users.find(x => x.id === idFromUrl());
 
@@ -288,7 +375,7 @@ export function configureFakeBackend() {
 
                 // update and save user
                 Object.assign(user, params);
-                localStorage.setItem(usersKey, JSON.stringify(users));
+                // localStorage.setItem(usersKey, JSON.stringify(users));
 
                 return ok({
                     id: user.id,
@@ -299,10 +386,10 @@ export function configureFakeBackend() {
                     role: user.role
                 });
             }
-    
+
             function deleteUser() {
                 if (!isAuthenticated()) return unauthorized();
-    
+
                 let user = users.find(x => x.id === idFromUrl());
 
                 // users can delete own account and admins can delete any account
@@ -312,10 +399,94 @@ export function configureFakeBackend() {
 
                 // delete user then save
                 users = users.filter(x => x.id !== idFromUrl());
-                localStorage.setItem(usersKey, JSON.stringify(users));
+                // localStorage.setItem(usersKey, JSON.stringify(users));
                 return ok();
             }
-    
+
+
+            // product CRUD
+
+            function getProducts() {
+                // if (!isAuthorized(Role.Admin)) return unauthorized();
+
+                return ok(products);
+            }
+
+            function getProductById() {
+                // if (!isAuthenticated()) return unauthorized();
+
+                let product = products.find(x => x.id === idFromUrl());
+
+                // products can get own profile and admins can get all profiles
+                // if (product.id !== currentProduct().id && !isAuthorized(Role.Admin)) {
+                // return unauthorized();
+                // }
+
+                return ok(product);
+            }
+
+            function newProductId() {
+                return products.length ? Math.max(...products.map(x => x.id)) + 1 : 1;
+            }
+
+            function createProduct() {
+                // if (!isAuthorized(Role.Admin)) return unauthorized();
+
+                const product = body();
+                // if (products.find(x => x.email === product.email)) {
+                // return error(`Email ${product.email} is already registered`);
+                // }
+
+                // assign product id and a few other properties then save
+                product.id = newProductId();
+                product.dateCreated = new Date().toISOString();
+                products.push(product);
+                // localStorage.setItem(productsKey, JSON.stringify(products));
+
+                return ok();
+            }
+
+            function updateProduct() {
+                if (!isAuthenticated()) return unauthorized();
+
+                let params = body();
+                let product = products.find(x => x.id === idFromUrl());
+
+                // only admins can update products
+                if (!isAuthorized(Role.Admin)) {
+                    return unauthorized();
+                }
+
+                // update and save product
+                Object.assign(product, params);
+                // localStorage.setItem(productsKey, JSON.stringify(products));
+
+                return ok({
+                    id: product.id,
+                    email: product.email,
+                    title: product.title,
+                    firstName: product.firstName,
+                    lastName: product.lastName,
+                    role: product.role
+                });
+            }
+
+            function deleteProduct() {
+                if (!isAuthenticated()) return unauthorized();
+
+                let product = products.find(x => x.id === idFromUrl());
+
+                // only admins can delete products
+                if (!isAuthorized(Role.Admin)) {
+                    return unauthorized();
+                }
+
+                // delete product then save
+                products = products.filter(x => x.id !== idFromUrl());
+                // localStorage.setItem(productsKey, JSON.stringify(products));
+                return ok();
+            }
+
             // helper functions
 
             function ok(body) {
@@ -333,20 +504,20 @@ export function configureFakeBackend() {
             function isAuthenticated() {
                 return !!currentUser();
             }
-    
+
             function isAuthorized(role) {
                 const user = currentUser();
                 if (!user) return false;
                 return user.role === role;
             }
-    
+
             function idFromUrl() {
                 const urlParts = url.split('/');
                 return parseInt(urlParts[urlParts.length - 1]);
             }
 
             function body() {
-                return opts.body && JSON.parse(opts.body);    
+                return opts.body && JSON.parse(opts.body);
             }
 
             function newUserId() {
@@ -355,7 +526,7 @@ export function configureFakeBackend() {
 
             function generateJwtToken(user) {
                 // create token that expires in 15 minutes
-                const tokenPayload = { 
+                const tokenPayload = {
                     exp: Math.round(new Date(Date.now() + 15*60*1000).getTime() / 1000),
                     id: user.id
                 }

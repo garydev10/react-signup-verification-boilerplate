@@ -19,15 +19,18 @@ function App() {
     }, []);
 
     return (
-        <div className={'app-container' + (user && ' bg-light')}>
+        // <div className={'app-container' + (user && ' bg-light')}>        
+        <div className={(user && ' bg-light')}>
             <Nav />
             <Alert />
             <Switch>
                 <Redirect from="/:url*(/+)" to={pathname.slice(0, -1)} />
-                <PrivateRoute exact path="/" component={Home} />
+                {/* <PrivateRoute exact path="/" component={Home} /> */}
+                <PrivateRoute exact path="/" component={Product} />
                 <PrivateRoute path="/profile" component={Profile} />
                 <PrivateRoute path="/admin" roles={[Role.Admin]} component={Admin} />
                 <Route path="/account" component={Account} />
+                <Route path="/product" component={Product} />
                 <Redirect from="*" to="/" />
             </Switch>
         </div>
